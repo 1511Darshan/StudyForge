@@ -53,9 +53,6 @@
    git clone https://github.com/1511Darshan/studyforge.git
    cd studyforge
 
-
-Here's how you can update your `README.md` to include both the **tech stack badges** and **software/tools used**, in a clean and professional way. Add this *below* your `## 🛠️ Installation` section or wherever you see fit:
-
 ---
 
 ## 🧰 Tech Stack & Tools
