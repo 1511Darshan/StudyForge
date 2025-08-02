@@ -6,11 +6,37 @@ from werkzeug.utils import secure_filename
 from fpdf import FPDF
 import google.generativeai as genai
 
+# Import analyzer blueprint
+try:
+    import sys
+    import os
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    from backend.routes.analyzer import analyzer_bp
+    ANALYZER_AVAILABLE = True
+    ANALYZER_TYPE = "full"
+except ImportError:
+    try:
+        # Fallback to mock analyzer
+        from analyzer_api_mock import analyzer_bp
+        ANALYZER_AVAILABLE = True
+        ANALYZER_TYPE = "mock"
+        print("Using mock Answer Analyzer API for demonstration")
+    except ImportError as e:
+        ANALYZER_AVAILABLE = False
+        ANALYZER_TYPE = "none"
+        print(f"Warning: Answer Analyzer module not available: {e}")
+
 # Flask app setup
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads/'
 app.config['RESULTS_FOLDER'] = 'results/'
 app.config['ALLOWED_EXTENSIONS'] = {'pdf', 'txt', 'docx'}
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+
+# Register blueprints
+if ANALYZER_AVAILABLE:
+    app.register_blueprint(analyzer_bp)
+    print(f"✅ Answer Analyzer API endpoints registered ({ANALYZER_TYPE} version)")
 
 # Ensure directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
