@@ -1,0 +1,27 @@
+# StudyForge Answer Analyzer - Additional Dependencies
+# Add these to your existing Flask app requirements
+
+# Flask extensions
+Flask>=2.3.0
+Werkzeug>=2.3.0
+
+# OCR and Image Processing
+opencv-python>=4.8.0
+pytesseract>=0.3.10
+Pillow>=10.0.0
+numpy>=1.24.0
+
+# AI/ML Libraries
+openai>=1.0.0
+
+# Database (SQLite for now, can upgrade to PostgreSQL later)
+SQLAlchemy>=2.0.0
+Flask-SQLAlchemy>=3.0.0
+
+# File handling
+python-multipart>=0.0.6
+aiofiles>=23.0.0
+
+# Utilities
+python-dotenv>=1.0.0
+requests>=2.31.0
