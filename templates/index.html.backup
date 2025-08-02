@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>StudyForge</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        :root {
+            --bg: #1e1e2f;
+            --fg: #e0e0e0;
+            --card-bg: #2a2a3f;
+            --input-bg: #1e1e2f;
+            --accent: #4e9eff;
+            --success: #4CAF50;
+        }
+
+        [data-theme="light"] {
+            --bg: #fff;
+            --fg: #333;
+            --card-bg: #f9f9fb;
+            --input-bg: #fff;
+            --accent: #0d6efd;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--bg);
+            color: var(--fg);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+    .glass-card {
+      background: linear-gradient(135deg, rgba(255,255,255,0.25), rgba(255,255,255,0.05));
+      border-radius: 30px;
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 2rem;
+      width: 100%;
+      max-width: 680px;
+      position: relative;
+    }
+
+    .glass-card h3 {
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #0d6efd;
+    }
+
+    .form-label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .form-control, .form-select {
+      background: rgba(255, 255, 255, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      color: #000;
+      border-radius: 12px;
+    }
+
+    .form-control:focus, .form-select:focus {
+      background-color: rgba(255, 255, 255, 0.7);
+      border-color: #0d6efd;
+      box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+
+    .btn-primary {
+      border-radius: 12px;
+      padding: 0.6rem;
+      font-weight: 700;
+      background-color: #0d6efd;
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background-color: #0b5ed7;
+    }
+
+    .progress {
+      height: 1.5rem;
+      border-radius: 12px;
+    }
+
+    .form-check-label {
+      font-weight: 500;
+      color: #333;
+    }
+
+    .theme-accent {
+      background-color: #c4ff0e;
+      color: #020065;
+      font-weight: bold;
+      padding: 0.3rem 0.7rem;
+      border-radius: 10px;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+
+    .rounded-accent {
+      background-color: #0d6efd;
+      color: #fff;
+      border-radius: 20px;
+      padding: 0.2rem 1rem;
+      display: inline-block;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="glass-card">
+    <div class="text-center mb-3">
+      <span class="theme-accent">✨ AI Powered</span>
+    </div>
+    <h3>📄 Upload a Document to Generate Content</h3>
+    <form id="uploadForm" method="POST" action="/generate" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label for="file" class="form-label">Choose a file (PDF, DOCX, or TXT):</label>
+        <input class="form-control" type="file" name="file" id="file" required>
+      </div>
+
+      <div class="mb-3">
+        <label for="task" class="form-label">What would you like to generate?</label>
+        <select class="form-select" name="task" id="task" required>
+          <option value="mcq" selected>MCQs</option>
+          <option value="summary">Summary / Study Notes</option>
+          <option value="flashcards">Flash Cards</option>
+          <option value="longanswers">Long Answers</option>
+        </select>
+      </div>
+
+      <div class="mb-3" id="num_questions_group">
+        <label for="num_questions" class="form-label">Number of Questions:</label>
+        <input class="form-control" type="number" name="num_questions" id="num_questions" min="1" value="5" required>
+      </div>
+
+      <div class="form-check form-switch mb-3">
+        <input class="form-check-input" type="checkbox" id="darkModeToggle">
+        <label class="form-check-label" for="darkModeToggle">Dark Mode</label>
+      </div>
+
+      <div class="d-grid">
+        <button type="submit" class="btn btn-primary">Generate</button>
+      </div>
+
+      <div class="progress mt-4 d-none" id="uploadProgress">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%">Uploading...</div>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const taskSelect = document.getElementById('task');
+      const numQuestionsGroup = document.getElementById('num_questions_group');
+      const darkToggle = document.getElementById('darkModeToggle');
+      const uploadForm = document.getElementById('uploadForm');
+      const progress = document.getElementById('uploadProgress');
+
+      function toggleNumQuestions() {
+        const show = ['mcq', 'flashcards', 'longanswers'].includes(taskSelect.value);
+        numQuestionsGroup.style.display = show ? '' : 'none';
+        document.getElementById('num_questions').required = show;
+      }
+
+      taskSelect.addEventListener('change', toggleNumQuestions);
+      toggleNumQuestions();
+
+      darkToggle.addEventListener('change', function () {
+        document.body.classList.toggle('bg-dark');
+        document.body.classList.toggle('text-white');
+        document.querySelectorAll('.glass-card').forEach(card => card.classList.toggle('bg-dark'));
+        document.querySelectorAll('input, select').forEach(el => el.classList.toggle('bg-dark'));
+      });
+
+      uploadForm.addEventListener('submit', function () {
+        progress.classList.remove('d-none');
+      });
+    });
+  </script>
+</body>
+</html>
