@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Create blueprint for analyzer routes
 analyzer_bp = Blueprint('analyzer', __name__, url_prefix='/api/analyzer')
+rubrics_bp = Blueprint('rubrics', __name__, url_prefix='/api/analyzer/rubrics')
 
 # Configure upload settings
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff', 'pdf'}
@@ -360,3 +361,241 @@ def internal_error(error):
         'error': 'Internal server error',
         'message': 'An unexpected error occurred in the analyzer service'
     }), 500
+
+
+# === RUBRICS MANAGEMENT ENDPOINTS ===
+
+@rubrics_bp.route('/', methods=['GET'])
+def list_rubrics():
+    """Get list of all rubrics with optional filtering"""
+    subject = request.args.get('subject')
+    topic = request.args.get('topic')
+    limit = int(request.args.get('limit', 50))
+    offset = int(request.args.get('offset', 0))
+    
+    mock_rubrics = [
+        {
+            'rubric_id': 'rubric_math_001',
+            'subject': 'Mathematics',
+            'topic': 'Calculus',
+            'question_text': 'Find the derivative of f(x) = x^3 + 2x^2 - 5x + 1',
+            'max_marks': 10.0,
+            'difficulty_level': 'Medium',
+            'created_at': '2025-08-02T16:00:00',
+            'updated_at': None
+        },
+        {
+            'rubric_id': 'rubric_phys_001',
+            'subject': 'Physics',
+            'topic': 'Mechanics',
+            'question_text': 'A ball is thrown vertically upward with initial velocity 20 m/s. Calculate the maximum height reached.',
+            'max_marks': 15.0,
+            'difficulty_level': 'Hard',
+            'created_at': '2025-08-02T15:30:00',
+            'updated_at': '2025-08-02T16:15:00'
+        },
+        {
+            'rubric_id': 'rubric_chem_001',
+            'subject': 'Chemistry',
+            'topic': 'Organic Chemistry',
+            'question_text': 'Draw the structure of 2-methylbutanoic acid and identify functional groups.',
+            'max_marks': 8.0,
+            'difficulty_level': 'Easy',
+            'created_at': '2025-08-02T14:45:00',
+            'updated_at': None
+        }
+    ]
+    
+    # Filter by subject if provided
+    if subject:
+        mock_rubrics = [r for r in mock_rubrics if r['subject'].lower() == subject.lower()]
+    
+    # Filter by topic if provided
+    if topic:
+        mock_rubrics = [r for r in mock_rubrics if r['topic'].lower() == topic.lower()]
+    
+    return jsonify({
+        'rubrics': mock_rubrics[offset:offset+limit],
+        'count': len(mock_rubrics[offset:offset+limit]),
+        'offset': offset,
+        'limit': limit,
+        'note': 'Mock rubrics data for demonstration'
+    })
+
+
+@rubrics_bp.route('/<string:rubric_id>', methods=['GET'])
+def get_rubric(rubric_id: str):
+    """Get detailed rubric information"""
+    
+    if rubric_id == 'rubric_math_001':
+        return jsonify({
+            'rubric_id': 'rubric_math_001',
+            'subject': 'Mathematics',
+            'topic': 'Calculus',
+            'question_text': 'Find the derivative of f(x) = x^3 + 2x^2 - 5x + 1',
+            'model_answer': 'f\'(x) = 3x^2 + 4x - 5',
+            'marking_scheme': {
+                'derivative_rules': {
+                    'description': 'Correctly applies derivative rules',
+                    'marks': 4.0
+                },
+                'calculation': {
+                    'description': 'Accurate calculation of each term',
+                    'marks': 4.0
+                },
+                'final_answer': {
+                    'description': 'Correct final simplified form',
+                    'marks': 2.0
+                }
+            },
+            'keywords': ['derivative', 'power rule', 'polynomial'],
+            'max_marks': 10.0,
+            'difficulty_level': 'Medium',
+            'notes': 'Standard calculus differentiation problem',
+            'created_at': '2025-08-02T16:00:00',
+            'updated_at': None,
+            'created_by': 'system'
+        })
+    elif rubric_id == 'rubric_phys_001':
+        return jsonify({
+            'rubric_id': 'rubric_phys_001',
+            'subject': 'Physics',
+            'topic': 'Mechanics',
+            'question_text': 'A ball is thrown vertically upward with initial velocity 20 m/s. Calculate the maximum height reached.',
+            'model_answer': 'Using v² = u² + 2as, at max height v=0, u=20m/s, a=-9.8m/s². Height = u²/(2g) = 400/19.6 = 20.4m',
+            'marking_scheme': {
+                'equation_setup': {
+                    'description': 'Correct kinematic equation selection',
+                    'marks': 3.0
+                },
+                'substitution': {
+                    'description': 'Proper substitution of values',
+                    'marks': 4.0
+                },
+                'calculation': {
+                    'description': 'Accurate numerical calculation',
+                    'marks': 5.0
+                },
+                'units': {
+                    'description': 'Correct units in final answer',
+                    'marks': 2.0
+                },
+                'method': {
+                    'description': 'Clear logical approach',
+                    'marks': 1.0
+                }
+            },
+            'keywords': ['kinematic equations', 'projectile motion', 'maximum height', 'acceleration due to gravity'],
+            'max_marks': 15.0,
+            'difficulty_level': 'Hard',
+            'notes': 'Classic physics problem requiring kinematic analysis',
+            'created_at': '2025-08-02T15:30:00',
+            'updated_at': '2025-08-02T16:15:00',
+            'created_by': 'physics_teacher'
+        })
+    else:
+        return jsonify({'error': 'Rubric not found'}), 404
+
+
+@rubrics_bp.route('/', methods=['POST'])
+def create_rubric():
+    """Create a new marking rubric"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'JSON data required'}), 400
+    
+    # Basic validation
+    required_fields = ['subject', 'topic', 'question_text', 'max_marks']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({'error': f'Missing required field: {field}'}), 400
+    
+    # Generate mock rubric ID
+    rubric_id = f"mock_rubric_{int(datetime.now().timestamp())}"
+    
+    return jsonify({
+        'message': 'Rubric created successfully (mock)',
+        'rubric_id': rubric_id,
+        'subject': data['subject'],
+        'topic': data['topic'],
+        'max_marks': data['max_marks'],
+        'created_at': datetime.now().isoformat()
+    }), 201
+
+
+@rubrics_bp.route('/<string:rubric_id>', methods=['PUT'])
+def update_rubric(rubric_id: str):
+    """Update an existing rubric"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'JSON data required'}), 400
+    
+    return jsonify({
+        'message': 'Rubric updated successfully (mock)',
+        'rubric_id': rubric_id,
+        'updated_at': datetime.now().isoformat()
+    })
+
+
+@rubrics_bp.route('/<string:rubric_id>', methods=['DELETE'])
+def delete_rubric(rubric_id: str):
+    """Delete a rubric"""
+    return jsonify({'message': 'Rubric deleted successfully (mock)'})
+
+
+@rubrics_bp.route('/validate', methods=['POST'])
+def validate_rubric():
+    """Validate rubric structure without saving"""
+    data = request.get_json()
+    
+    if not data:
+        return jsonify({'error': 'JSON data required'}), 400
+    
+    # Basic validation
+    required_fields = ['subject', 'topic', 'question_text', 'max_marks']
+    for field in required_fields:
+        if field not in data:
+            return jsonify({
+                'valid': False,
+                'error': f'Missing required field: {field}'
+            }), 400
+    
+    return jsonify({
+        'valid': True,
+        'message': 'Rubric structure is valid (mock validation)',
+        'validation_notes': ['This is a mock validation - full validation requires backend services']
+    })
+
+
+@rubrics_bp.route('/subjects', methods=['GET'])
+def get_subjects():
+    """Get list of all subjects that have rubrics"""
+    return jsonify({
+        'subjects': ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Computer Science'],
+        'note': 'Mock subjects data'
+    })
+
+
+@rubrics_bp.route('/topics', methods=['GET'])
+def get_topics():
+    """Get list of topics for a subject"""
+    subject = request.args.get('subject')
+    
+    if not subject:
+        return jsonify({'error': 'Subject parameter required'}), 400
+    
+    mock_topics = {
+        'Mathematics': ['Algebra', 'Calculus', 'Geometry', 'Statistics'],
+        'Physics': ['Mechanics', 'Thermodynamics', 'Electromagnetism', 'Optics'],
+        'Chemistry': ['Organic Chemistry', 'Inorganic Chemistry', 'Physical Chemistry'],
+        'Biology': ['Cell Biology', 'Genetics', 'Ecology', 'Evolution'],
+        'Computer Science': ['Data Structures', 'Algorithms', 'Database Systems', 'Networks']
+    }
+    
+    return jsonify({
+        'subject': subject,
+        'topics': mock_topics.get(subject, []),
+        'note': 'Mock topics data'
+    })

@@ -267,3 +267,132 @@ class DatabaseManager:
             return feedback_list
         finally:
             conn.close()
+    
+    # === RUBRIC MANAGEMENT METHODS ===
+    
+    def get_rubrics(self, filters: dict = None, limit: int = 50, offset: int = 0) -> List[QuestionRubric]:
+        """Get rubrics with optional filtering"""
+        conn = self.get_connection()
+        try:
+            query = "SELECT * FROM question_rubrics WHERE 1=1"
+            params = []
+            
+            if filters:
+                if 'subject' in filters:
+                    query += " AND subject = ?"
+                    params.append(filters['subject'])
+                if 'topic' in filters:
+                    query += " AND topic = ?"
+                    params.append(filters['topic'])
+            
+            query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+            params.extend([limit, offset])
+            
+            cursor = conn.execute(query, params)
+            
+            rubrics = []
+            for row in cursor.fetchall():
+                rubrics.append(QuestionRubric.from_dict(dict(row)))
+            
+            return rubrics
+        finally:
+            conn.close()
+    
+    def get_rubric(self, rubric_id: str) -> Optional[QuestionRubric]:
+        """Get a specific rubric by ID"""
+        conn = self.get_connection()
+        try:
+            cursor = conn.execute(
+                "SELECT * FROM question_rubrics WHERE rubric_id = ?", (rubric_id,)
+            )
+            
+            row = cursor.fetchone()
+            if row:
+                return QuestionRubric.from_dict(dict(row))
+            return None
+        finally:
+            conn.close()
+    
+    def save_rubric(self, rubric: QuestionRubric) -> QuestionRubric:
+        """Save or update a rubric"""
+        conn = self.get_connection()
+        try:
+            # Check if rubric exists
+            existing = self.get_rubric(rubric.rubric_id)
+            
+            if existing:
+                # Update existing rubric
+                conn.execute("""
+                    UPDATE question_rubrics SET
+                        subject = ?, topic = ?, question_text = ?, model_answer = ?,
+                        marking_scheme = ?, keywords = ?, max_marks = ?,
+                        difficulty_level = ?, notes = ?, updated_at = ?
+                    WHERE rubric_id = ?
+                """, (
+                    rubric.subject, rubric.topic, rubric.question_text, rubric.model_answer,
+                    json.dumps(rubric.marking_scheme), json.dumps(rubric.keywords), rubric.max_marks,
+                    rubric.difficulty_level, rubric.notes, datetime.utcnow().isoformat(),
+                    rubric.rubric_id
+                ))
+            else:
+                # Insert new rubric
+                conn.execute("""
+                    INSERT INTO question_rubrics (
+                        rubric_id, subject, topic, question_text, model_answer,
+                        marking_scheme, keywords, max_marks, difficulty_level,
+                        notes, created_by, created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    rubric.rubric_id, rubric.subject, rubric.topic, rubric.question_text,
+                    rubric.model_answer, json.dumps(rubric.marking_scheme), json.dumps(rubric.keywords),
+                    rubric.max_marks, rubric.difficulty_level, rubric.notes, rubric.created_by,
+                    rubric.created_at.isoformat()
+                ))
+            
+            conn.commit()
+            return rubric
+        finally:
+            conn.close()
+    
+    def delete_rubric(self, rubric_id: str) -> bool:
+        """Delete a rubric"""
+        conn = self.get_connection()
+        try:
+            cursor = conn.execute("DELETE FROM question_rubrics WHERE rubric_id = ?", (rubric_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+        finally:
+            conn.close()
+    
+    def count_analyses_by_rubric(self, rubric_id: str) -> int:
+        """Count how many analyses use this rubric"""
+        conn = self.get_connection()
+        try:
+            cursor = conn.execute(
+                "SELECT COUNT(*) FROM answer_analyses WHERE analysis_results LIKE ?",
+                (f'%{rubric_id}%',)
+            )
+            return cursor.fetchone()[0]
+        finally:
+            conn.close()
+    
+    def get_distinct_subjects(self) -> List[str]:
+        """Get list of all subjects that have rubrics"""
+        conn = self.get_connection()
+        try:
+            cursor = conn.execute("SELECT DISTINCT subject FROM question_rubrics ORDER BY subject")
+            return [row[0] for row in cursor.fetchall()]
+        finally:
+            conn.close()
+    
+    def get_topics_by_subject(self, subject: str) -> List[str]:
+        """Get list of topics for a specific subject"""
+        conn = self.get_connection()
+        try:
+            cursor = conn.execute(
+                "SELECT DISTINCT topic FROM question_rubrics WHERE subject = ? ORDER BY topic",
+                (subject,)
+            )
+            return [row[0] for row in cursor.fetchall()]
+        finally:
+            conn.close()

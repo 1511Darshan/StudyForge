@@ -12,12 +12,13 @@ try:
     import os
     sys.path.append(os.path.dirname(os.path.abspath(__file__)))
     from backend.routes.analyzer import analyzer_bp
+    from backend.routes.analyzer.rubrics import rubrics_bp
     ANALYZER_AVAILABLE = True
     ANALYZER_TYPE = "full"
 except ImportError:
     try:
         # Fallback to mock analyzer
-        from analyzer_api_mock import analyzer_bp
+        from analyzer_api_mock import analyzer_bp, rubrics_bp
         ANALYZER_AVAILABLE = True
         ANALYZER_TYPE = "mock"
         print("Using mock Answer Analyzer API for demonstration")
@@ -36,7 +37,9 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 # Register blueprints
 if ANALYZER_AVAILABLE:
     app.register_blueprint(analyzer_bp)
+    app.register_blueprint(rubrics_bp)
     print(f"✅ Answer Analyzer API endpoints registered ({ANALYZER_TYPE} version)")
+    print(f"✅ Rubric management API endpoints registered ({ANALYZER_TYPE} version)")
 
 # Ensure directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
