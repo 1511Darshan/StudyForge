@@ -1,0 +1,39 @@
+## Flash Card
+Q: What is Darshan K's major and university?
+A: Artificial Intelligence and Data Science at Chennai Institute of Technology.
+
+## Flash Card
+Q: What is StudyForge?
+A: A Flask-based web app that uses AI (Groq and LLaMA 3) to transform documents into study materials.
+
+## Flash Card
+Q: What is one of Darshan K's current professional roles?
+A: AI Intern at IBM SkillsBuild (Edunet Foundation).
+
+## Flash Card
+Q: Which programming language has Darshan K used to solve over 200 LeetCode problems?
+A: C/C++.
+
+## Flash Card
+Q: From which company did Darshan K earn certifications in Data Science, Cybersecurity, and IoT?
+A: CISCO.
+
+## Flash Card
+Q: What mobile development framework is listed in the skills section?
+A: Flutter.
+
+## Flash Card
+Q: Who provided the "Web Developer Bootcamp" certification?
+A: Angela Yu on UDEMY.
+
+## Flash Card
+Q: With which company did Darshan K complete a Data Analytics Virtual Experience?
+A: Deloitte (via FORAGE).
+
+## Flash Card
+Q: What design tool is mentioned in Darshan K's skills?
+A: Figma.
+
+## Flash Card
+Q: When is Darshan K expected to graduate?
+A: September 2028.

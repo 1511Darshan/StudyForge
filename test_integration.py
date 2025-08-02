@@ -1,9 +1,12 @@
 """
-Integration test for OCR + Text Processing pipeline
-Shows how the components work together for answer sheet analysis
+Integration test for the complete analyzer service pipeline
+Tests OCR + Text Processing + Semantic Matching integration
 """
 import os
 import sys
+import json
+import tempfile
+import time
 from PIL import Image, ImageDraw, ImageFont
 
 # Add project root to path
